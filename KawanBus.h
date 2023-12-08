@@ -9,4 +9,7 @@
 #include "KBActuatorSpeaker.h"
 #include "KBActuatorMotor.h"
 
+#include "KBBus.h"
+#include "KBTransit.h"
+
 #endif

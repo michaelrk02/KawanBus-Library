@@ -16,32 +16,21 @@ public:
 class KBSensorGPSDummy : public KBSensorGPS
 {
 public:
-    KBSensorGPSDummy(const std::vector<KBVector> &nodes, float nodeThreshold);
+    KBSensorGPSDummy(void);
     ~KBSensorGPSDummy(void);
 
     void init(void);
     void update(void);
+
+    void setLongitude(float value);
     float getLongitude(void);
+
+    void setLatitude(float value);
     float getLatitude(void);
 
-    bool isMoving(void);
-    void setMoving(bool value);
-
-    float getVelocity(void);
-    void setVelocity(float value);
-
 protected:
-    std::vector<KBVector> m_nodes;
-    float m_nodeThreshold;
-
-    bool m_moving;
-    float m_velocity;
-
-    int m_destination;
     float m_latitude;
     float m_longitude;
-
-    int getRandomNode(void);
 };
 
 #endif

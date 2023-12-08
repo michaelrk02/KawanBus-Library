@@ -1,11 +1,13 @@
 #include "KBSensorGPS.h"
+#include "KBServer.h"
 #include "KBTransit.h"
 
 #include "KBBus.h"
 
-KBBusDummy::KBBusDummy(const std::vector<KBTransit *> &nodes, float proximityThreshold)
+KBBusDummy::KBBusDummy(KBServer *server, KBUID id, float proximityThreshold)
 {
-    m_transits = nodes;
+    m_server = server;
+    m_id = id;
     m_proximityThreshold = proximityThreshold;
 
     m_moving = false;
@@ -26,7 +28,8 @@ void KBBusDummy::init(void)
 {
     int source = getRandomTransit();
 
-    KBVector pos = m_transits[source]->getPosition();
+    std::vector<KBTransit *> transits = m_server->getTransits();
+    KBVector pos = transits[source]->getPosition();
     m_sensorGPS->setLongitude(pos.x);
     m_sensorGPS->setLatitude(pos.y);
 
@@ -38,7 +41,9 @@ void KBBusDummy::update(void)
     m_sensorGPS->update();
 
     if (m_moving) {
-        KBVector dst = m_transits[m_destination]->getPosition();
+        std::vector<KBTransit *> transits = m_server->getTransits();
+
+        KBVector dst = transits[m_destination]->getPosition();
         KBVector cur = KBVectorCreate(m_sensorGPS->getLongitude(), m_sensorGPS->getLatitude());
 
         if (KBVectorMagnitude(KBVectorSubtract(dst, cur)) <= m_proximityThreshold) {
@@ -55,6 +60,11 @@ void KBBusDummy::update(void)
 
         m_direction = dir;
     }
+}
+
+KBUID KBBusDummy::getID(void)
+{
+    return m_id;
 }
 
 KBVector KBBusDummy::getPosition(void)
@@ -92,5 +102,5 @@ void KBBusDummy::setVelocity(float value)
 
 int KBBusDummy::getRandomTransit(void)
 {
-    return (int)(KBRandom() * (float)m_transits.size());
+    return (int)(KBRandom() * (float)m_server->getTransits().size());
 }

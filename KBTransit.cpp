@@ -39,8 +39,8 @@ void KBTransitDummy::update(void)
     }
 
     for (int i = 0; i < buses.size(); i++) {
-        KBVector transitPos = getPosition();
-        KBVector busPos = buses[i]->getPosition();
+        KBVector transitPos = KBCoordinateGeographicToSpatial(getPosition());
+        KBVector busPos = KBCoordinateGeographicToSpatial(buses[i]->getPosition());
 
         float distance = KBVectorMagnitude(KBVectorSubtract(busPos, transitPos));
         if ((distance <= m_rangeThreshold) && (m_inRange.count(buses[i]->getID()) == 0)) {
@@ -51,6 +51,10 @@ void KBTransitDummy::update(void)
             Serial.print(" is entering transit ");
             Serial.print(m_id);
             Serial.println("");
+
+            if (buses[i]->getID() == m_server->getTrackID()) {
+                m_server->sendTransitInRange(m_id);
+            }
         }
         if ((distance <= m_proximityThreshold) && (m_inProximity.count(buses[i]->getID()) == 0)) {
             m_inProximity.insert(buses[i]->getID());
@@ -60,13 +64,17 @@ void KBTransitDummy::update(void)
             Serial.print(" is stopping at transit ");
             Serial.print(m_id);
             Serial.println("");
+
+            if (buses[i]->getID() == m_server->getTrackID()) {
+                m_server->sendTransitInProximity(m_id);
+            }
         }
     }
 
     for (std::set<KBUID>::iterator it = m_inProximity.begin(); it != m_inProximity.end(); ) {
         KBUID id = *it;
-        KBVector transitPos = getPosition();
-        KBVector busPos = busIndex[id]->getPosition();
+        KBVector transitPos = KBCoordinateGeographicToSpatial(getPosition());
+        KBVector busPos = KBCoordinateGeographicToSpatial(busIndex[id]->getPosition());
 
         float distance = KBVectorMagnitude(KBVectorSubtract(busPos, transitPos));
         if (distance > m_proximityThreshold) {
@@ -77,6 +85,10 @@ void KBTransitDummy::update(void)
             Serial.print(" is leaving transit ");
             Serial.print(m_id);
             Serial.println("");
+
+            if (id == m_server->getTrackID()) {
+                m_server->sendTransitInProximity(0);
+            }
         } else {
             ++it;
         }
@@ -84,8 +96,8 @@ void KBTransitDummy::update(void)
 
     for (std::set<KBUID>::iterator it = m_inRange.begin(); it != m_inRange.end(); ) {
         KBUID id = *it;
-        KBVector transitPos = getPosition();
-        KBVector busPos = busIndex[id]->getPosition();
+        KBVector transitPos = KBCoordinateGeographicToSpatial(getPosition());
+        KBVector busPos = KBCoordinateGeographicToSpatial(busIndex[id]->getPosition());
 
         float distance = KBVectorMagnitude(KBVectorSubtract(busPos, transitPos));
         if (distance > m_rangeThreshold) {
@@ -97,6 +109,10 @@ void KBTransitDummy::update(void)
             Serial.print(m_id);
             Serial.print(" range");
             Serial.println("");
+
+            if (id == m_server->getTrackID()) {
+                m_server->sendTransitInRange(0);
+            }
         } else {
             ++it;
         }
@@ -120,4 +136,19 @@ void KBTransitDummy::setPosition(KBVector value)
 {
     m_sensorGPS->setLongitude(value.x);
     m_sensorGPS->setLatitude(value.y);
+}
+
+KBUID KBTransitDummy::getNearestBusID(void)
+{
+    return 0;
+}
+
+float KBTransitDummy::getNearestBusDistance(void)
+{
+    return 0.0f;
+}
+
+float KBTransitDummy::getNearestBusETA(void)
+{
+    return 0.0f;
 }

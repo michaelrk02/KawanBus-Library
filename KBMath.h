@@ -23,4 +23,7 @@ float KBVectorDotProduct(KBVector v1, KBVector v2);
 
 float KBRandom(void);
 
+KBVector KBCoordinateGeographicToSpatial(KBVector v);
+KBVector KBCoordinateSpatialToGeographic(KBVector v);
+
 #endif

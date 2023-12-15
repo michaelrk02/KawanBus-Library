@@ -14,6 +14,8 @@ public:
 };
 
 class KBServer;
+class KBSensorGPSDummy;
+class KBSensorAccelProto;
 
 class KBBusDummy : public KBBus
 {
@@ -32,7 +34,6 @@ public:
     void setMoving(bool value);
 
     float getVelocity(void);
-    void setVelocity(float value);
 
 protected:
     KBServer *m_server;
@@ -40,9 +41,10 @@ protected:
     float m_proximityThreshold;
 
     bool m_moving;
-    float m_velocity;
+    unsigned long m_timer;
 
     KBSensorGPSDummy *m_sensorGPS;
+    KBSensorAccelProto *m_sensorAccel;
     KBVector m_direction;
     int m_destination;
 

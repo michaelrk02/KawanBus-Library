@@ -1,4 +1,6 @@
+#include "Arduino.h"
 #include "KBSensorGPS.h"
+#include "KBSensorAccel.h"
 #include "KBServer.h"
 #include "KBTransit.h"
 
@@ -11,21 +13,25 @@ KBBusDummy::KBBusDummy(KBServer *server, KBUID id, float proximityThreshold)
     m_proximityThreshold = proximityThreshold;
 
     m_moving = false;
-    m_velocity = 0.0f;
-
-    m_direction = KBVectorValue(0.0f);
-    m_destination = 0;
+    m_timer = 0;
 
     m_sensorGPS = new KBSensorGPSDummy();
+    m_sensorAccel = new KBSensorAccelProto(KB_PROTO_ACCEL_PIN, 0.3f);
+    m_direction = KBVectorValue(0.0f);
+    m_destination = 0;
 }
 
 KBBusDummy::~KBBusDummy(void)
 {
+    delete m_sensorAccel;
     delete m_sensorGPS;
 }
 
 void KBBusDummy::init(void)
 {
+    m_sensorGPS->init();
+    m_sensorAccel->init();
+
     int source = getRandomTransit();
 
     std::vector<KBTransit *> transits = m_server->getTransits();
@@ -38,27 +44,34 @@ void KBBusDummy::init(void)
 
 void KBBusDummy::update(void)
 {
+    unsigned long now = millis();
+
     m_sensorGPS->update();
+    m_sensorAccel->update();
 
     if (m_moving) {
-        std::vector<KBTransit *> transits = m_server->getTransits();
+        if (now - m_timer > 1000) {
+            std::vector<KBTransit *> transits = m_server->getTransits();
 
-        KBVector dst = transits[m_destination]->getPosition();
-        KBVector cur = KBVectorCreate(m_sensorGPS->getLongitude(), m_sensorGPS->getLatitude());
+            KBVector dst = KBCoordinateGeographicToSpatial(transits[m_destination]->getPosition());
+            KBVector cur = KBCoordinateGeographicToSpatial(KBVectorCreate(m_sensorGPS->getLongitude(), m_sensorGPS->getLatitude()));
 
-        if (KBVectorMagnitude(KBVectorSubtract(dst, cur)) <= m_proximityThreshold) {
-            m_destination = getRandomTransit();
-            return;
+            if (KBVectorMagnitude(KBVectorSubtract(dst, cur)) <= m_proximityThreshold) {
+                m_destination = getRandomTransit();
+                return;
+            }
+
+            KBVector dir = KBVectorNormalize(KBVectorSubtract(dst, cur));
+            KBVector vel = KBVectorMultiply(KBVectorValue(getVelocity() / 3600.0f), dir);
+
+            KBVector next = KBCoordinateSpatialToGeographic(KBVectorAdd(cur, vel));
+            m_sensorGPS->setLongitude(next.x);
+            m_sensorGPS->setLatitude(next.y);
+
+            m_direction = dir;
+
+            m_timer = now;
         }
-
-        KBVector dir = KBVectorNormalize(KBVectorSubtract(dst, cur));
-        KBVector vel = KBVectorMultiply(KBVectorValue(m_velocity), dir);
-
-        KBVector next = KBVectorAdd(cur, vel);
-        m_sensorGPS->setLongitude(next.x);
-        m_sensorGPS->setLatitude(next.y);
-
-        m_direction = dir;
     }
 }
 
@@ -92,12 +105,11 @@ void KBBusDummy::setMoving(bool value)
 
 float KBBusDummy::getVelocity(void)
 {
-    return m_velocity;
-}
+    if (m_id != m_server->getTrackID()) {
+        return 0.0f;
+    }
 
-void KBBusDummy::setVelocity(float value)
-{
-    m_velocity = value;
+    return m_sensorAccel->getVelocity();
 }
 
 int KBBusDummy::getRandomTransit(void)

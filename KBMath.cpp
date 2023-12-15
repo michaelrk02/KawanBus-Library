@@ -1,5 +1,6 @@
-#include <math.h>
 #include <stdlib.h>
+
+#include "Arduino.h"
 
 #include "KBMath.h"
 
@@ -37,7 +38,7 @@ KBVector KBVectorInvert(KBVector v)
 
 float KBVectorMagnitude(KBVector v)
 {
-    return sqrtf(powf(v.x, 2.0f) + powf(v.y, 2.0f));
+    return sqrt(pow(v.x, 2.0f) + pow(v.y, 2.0f));
 }
 
 KBVector KBVectorNormalize(KBVector v)
@@ -91,5 +92,21 @@ float KBRandom(void)
     float x = (float)std::rand();
     float max = (float)RAND_MAX;
     return x / max;
+}
+
+KBVector KBCoordinateGeographicToSpatial(KBVector v)
+{
+    KBVector u;
+    u.x = v.x * 111.320f * cos(v.y / 180.0f * PI);
+    u.y = v.y * 110.574f;
+    return u;
+}
+
+KBVector KBCoordinateSpatialToGeographic(KBVector v)
+{
+    KBVector u;
+    u.y = v.y / 110.574f;
+    u.x = v.x / (111.320f * cos(u.y / 180.0f * PI));
+    return u;
 }
 

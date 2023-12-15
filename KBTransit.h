@@ -11,6 +11,9 @@ class KBTransit : public KBDevice
 public:
     virtual KBUID getID(void) = 0;
     virtual KBVector getPosition(void) = 0;
+    virtual KBUID getNearestBusID(void) = 0;
+    virtual float getNearestBusDistance(void) = 0;
+    virtual float getNearestBusETA(void) = 0;
 };
 
 class KBServer;
@@ -28,6 +31,10 @@ public:
 
     KBVector getPosition(void);
     void setPosition(KBVector value);
+
+    KBUID getNearestBusID(void);
+    float getNearestBusDistance(void);
+    float getNearestBusETA(void);
 
 protected:
     KBServer *m_server;

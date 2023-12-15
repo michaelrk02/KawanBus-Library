@@ -25,6 +25,10 @@ KBTransitDummy::~KBTransitDummy(void)
 void KBTransitDummy::init(void)
 {
     m_sensorGPS->init();
+
+    m_nearestBus = 0;
+    m_nearestDistance = 0;
+    m_nearestTime = 0;
 }
 
 void KBTransitDummy::update(void)
@@ -38,6 +42,9 @@ void KBTransitDummy::update(void)
         busIndex[buses[i]->getID()] = buses[i];
     }
 
+    KBUID nearest = 1;
+    float nearestDistance = 0.0f;
+    float nearestVelocity = 0.0f;
     for (int i = 0; i < buses.size(); i++) {
         KBVector transitPos = KBCoordinateGeographicToSpatial(getPosition());
         KBVector busPos = KBCoordinateGeographicToSpatial(buses[i]->getPosition());
@@ -69,7 +76,18 @@ void KBTransitDummy::update(void)
                 m_server->sendTransitInProximity(m_id);
             }
         }
+
+        KBVector nearestBusPos = KBCoordinateGeographicToSpatial(busIndex[nearest]->getPosition());
+        if (abs(KBVectorMagnitude(KBVectorSubtract(nearestBusPos, transitPos)) - distance) < 0.05) {
+            nearest = buses[i]->getID();
+            nearestDistance = distance;
+            nearestVelocity = buses[i]->getVelocity();
+        }
     }
+
+    m_nearestBus = nearest;
+    m_nearestDistance = (int)(nearestDistance * 1000.0f);
+    m_nearestTime = (int)((nearestDistance + 1.0f) / (nearestVelocity + 1.0f) * 3600.0f);
 
     for (std::set<KBUID>::iterator it = m_inProximity.begin(); it != m_inProximity.end(); ) {
         KBUID id = *it;
@@ -140,15 +158,15 @@ void KBTransitDummy::setPosition(KBVector value)
 
 KBUID KBTransitDummy::getNearestBusID(void)
 {
-    return 0;
+    return m_nearestBus;
 }
 
-float KBTransitDummy::getNearestBusDistance(void)
+int KBTransitDummy::getNearestBusDistance(void)
 {
-    return 0.0f;
+    return m_nearestDistance;
 }
 
-float KBTransitDummy::getNearestBusETA(void)
+int KBTransitDummy::getNearestBusETA(void)
 {
-    return 0.0f;
+    return m_nearestTime;
 }

@@ -18,6 +18,7 @@ public:
     virtual void sendSpeed(float s) = 0;
     virtual void sendTransitInRange(KBUID id) = 0;
     virtual void sendTransitInProximity(KBUID id) = 0;
+    virtual void sendEstimates(int time, int distance) = 0;
 
     virtual KBUID getTrackID(void) = 0;
 };

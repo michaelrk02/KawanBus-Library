@@ -12,8 +12,8 @@ public:
     virtual KBUID getID(void) = 0;
     virtual KBVector getPosition(void) = 0;
     virtual KBUID getNearestBusID(void) = 0;
-    virtual float getNearestBusDistance(void) = 0;
-    virtual float getNearestBusETA(void) = 0;
+    virtual int getNearestBusDistance(void) = 0;
+    virtual int getNearestBusETA(void) = 0;
 };
 
 class KBServer;
@@ -33,8 +33,8 @@ public:
     void setPosition(KBVector value);
 
     KBUID getNearestBusID(void);
-    float getNearestBusDistance(void);
-    float getNearestBusETA(void);
+    int getNearestBusDistance(void);
+    int getNearestBusETA(void);
 
 protected:
     KBServer *m_server;
@@ -45,6 +45,10 @@ protected:
     KBSensorGPSDummy *m_sensorGPS;
     std::set<KBUID> m_inRange;
     std::set<KBUID> m_inProximity;
+
+    KBUID m_nearestBus;
+    int m_nearestDistance;
+    int m_nearestTime;
 };
 
 #endif
